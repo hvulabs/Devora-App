@@ -1,15 +1,19 @@
-import React from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RouteProp } from "@react-navigation/native";
-import type { RootStackParamList } from "../navigation/types";
-import { getCategory } from "../data";
-import { useProgress } from "../store/progress";
-import { colors, font, radius } from "../theme";
 import { GlyphTile, LevelBadge } from "../components/ui";
+import { font, radius } from "../theme";
+import { useNavigation, useRoute } from "@react-navigation/native";
+
+import { Ionicons } from "@expo/vector-icons";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import React from "react";
+import type { RootStackParamList } from "../navigation/types";
+import type { RouteProp } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import type { ThemeColors } from "../theme";
+import { getCategory } from "../data";
+import { useAppTheme } from "../theme-context";
+import { useProgress } from "../store/progress";
+import { useT } from "../i18n";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Category">;
 type CategoryRoute = RouteProp<RootStackParamList, "Category">;
@@ -17,6 +21,9 @@ type CategoryRoute = RouteProp<RootStackParamList, "Category">;
 export default function CategoryScreen() {
   const nav = useNavigation<Nav>();
   const { params } = useRoute<CategoryRoute>();
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const t = useT();
   const { completed } = useProgress();
   const category = getCategory(params.slug);
 
@@ -25,7 +32,7 @@ export default function CategoryScreen() {
       <SafeAreaView style={styles.safe}>
         <Pressable onPress={() => nav.goBack()} style={styles.back}>
           <Ionicons name="chevron-back" size={22} color={colors.text} />
-          <Text style={styles.title}>Không tìm thấy chủ đề</Text>
+          <Text style={styles.title}>{t("category.notFound")}</Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -40,7 +47,7 @@ export default function CategoryScreen() {
         <GlyphTile glyph={category.glyph} color={category.color} size={54} />
         <Text style={styles.title}>{category.title}</Text>
         <Text style={styles.group}>{category.group}</Text>
-        <Text style={styles.meta}>{category.exerciseCount} bài · {category.questionCount} câu hỏi</Text>
+        <Text style={styles.meta}>{t("category.counts", { exercises: category.exerciseCount, questions: category.questionCount })}</Text>
       </View>
       <FlatList
         data={category.exercises}
@@ -55,13 +62,13 @@ export default function CategoryScreen() {
             >
               <View style={styles.exerciseTop}>
                 <LevelBadge level={item.level} />
-                {result ? <Text style={styles.progress}>{result.bestPct}% tốt nhất</Text> : null}
+                {result ? <Text style={styles.progress}>{t("category.best", { percent: result.bestPct })}</Text> : null}
               </View>
               <Text style={styles.exerciseTitle}>{item.title}</Text>
               {item.subtitle ? <Text style={styles.subtitle} numberOfLines={2}>{item.subtitle}</Text> : null}
               <View style={styles.exerciseMeta}>
-                <Text style={styles.metaText}>{item.count} câu</Text>
-                <Text style={styles.metaText}>+{item.xp} XP</Text>
+                <Text style={styles.metaText}>{t("category.questions", { count: item.count })}</Text>
+                <Text style={styles.metaText}>{t("category.xp", { count: item.xp })}</Text>
                 <Ionicons name="arrow-forward" size={16} color={colors.textMuted} />
               </View>
             </Pressable>
@@ -72,7 +79,7 @@ export default function CategoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: { paddingHorizontal: 18, paddingTop: 6, paddingBottom: 18, alignItems: "center" },
   back: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 8 },

@@ -1,24 +1,30 @@
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { font, radius } from "../theme";
+
 import React from "react";
-import { View, Text, StyleSheet, ViewStyle, StyleProp } from "react-native";
-import { colors, radius, font, levelColor } from "../theme";
+import type { ThemeColors } from "../theme";
+import { useAppTheme } from "../theme-context";
 
 export function Pill({
   label,
-  color = colors.primary,
+  color,
   faint,
 }: {
   label: string;
   color?: string;
   faint?: boolean;
 }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const pillColor = color ?? colors.primary;
   return (
     <View
       style={[
         styles.pill,
-        { backgroundColor: faint ? "rgba(124,92,255,0.14)" : withAlpha(color, 0.16) },
+        { backgroundColor: faint ? colors.primarySoft : withAlpha(pillColor, 0.16) },
       ]}
     >
-      <Text style={[styles.pillText, { color }]} numberOfLines={1}>
+      <Text style={[styles.pillText, { color: pillColor }]} numberOfLines={1}>
         {label}
       </Text>
     </View>
@@ -26,7 +32,9 @@ export function Pill({
 }
 
 export function LevelBadge({ level }: { level: string }) {
-  const c = levelColor[level] ?? colors.primary;
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const c = level === "Beginner" ? colors.green : level === "Intermediate" ? colors.accent : level === "Advanced" ? colors.red : colors.primary;
   return (
     <View style={[styles.levelBadge, { backgroundColor: withAlpha(c, 0.16) }]}>
       <View style={[styles.dot, { backgroundColor: c }]} />
@@ -37,19 +45,22 @@ export function LevelBadge({ level }: { level: string }) {
 
 export function ProgressBar({
   value,
-  color = colors.green,
+  color,
   height = 10,
 }: {
   value: number; // 0..1
   color?: string;
   height?: number;
 }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const barColor = color ?? colors.green;
   return (
     <View style={[styles.track, { height, borderRadius: height }]}>
       <View
         style={{
           width: `${Math.max(0, Math.min(1, value)) * 100}%`,
-          backgroundColor: color,
+          backgroundColor: barColor,
           height,
           borderRadius: height,
         }}
@@ -65,6 +76,8 @@ export function Card({
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
@@ -103,7 +116,7 @@ export function withAlpha(hex: string, alpha: number) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   pill: {
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -121,7 +134,7 @@ const styles = StyleSheet.create({
   },
   dot: { width: 7, height: 7, borderRadius: 4, marginRight: 6 },
   levelText: { fontSize: font.tiny, fontWeight: "700" },
-  track: { backgroundColor: "rgba(255,255,255,0.08)", width: "100%", overflow: "hidden" },
+  track: { backgroundColor: colors.borderSoft, width: "100%", overflow: "hidden" },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,

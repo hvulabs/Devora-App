@@ -1,0 +1,19 @@
+appId: com.devora.app
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: auth-guest
+- tapOn:
+    id: home-featured-exercise
+- repeat:
+    times: 5
+    commands:
+      - tapOn:
+          id: exercise-option-0
+      - tapOn:
+          id: exercise-advance
+- assertVisible:
+    id: result-score
+- tapOn:
+    id: result-home

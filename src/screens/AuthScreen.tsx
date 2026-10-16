@@ -4,7 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 
 import { Alert, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
-import { colors, font, radius } from "../theme";
+import { font, radius } from "../theme";
 
 import { Ionicons } from "@expo/vector-icons";
 import { Mascot } from "../components/Mascot";
@@ -12,8 +12,11 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ResponseType } from "expo-auth-session";
 import type { RootStackParamList } from "../navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { ThemeColors } from "../theme";
+import { useAppTheme } from "../theme-context";
 import { useNavigation } from "@react-navigation/native";
 import { useProgress } from "../store/progress";
+import { useT } from "../i18n";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -21,6 +24,9 @@ type Nav = NativeStackNavigationProp<RootStackParamList, "Auth">;
 
 export default function AuthScreen() {
   const nav = useNavigation<Nav>();
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const t = useT();
   const { signIn } = useProgress();
   const [appleAvailable, setAppleAvailable] = useState(false);
   const [googleRequest, googleResponse, promptGoogle] = Google.useAuthRequest({
@@ -44,7 +50,7 @@ export default function AuthScreen() {
   useEffect(() => {
     if (googleResponse?.type !== "success") return;
     if (!googleResponse.params.id_token) {
-      Alert.alert("Không thể đăng nhập", "Google không trả về mã xác thực. Vui lòng thử lại.");
+      Alert.alert(t("auth.errorTitle"), t("auth.googleTokenError"));
       return;
     }
     completeSignIn("google");
@@ -56,27 +62,27 @@ export default function AuthScreen() {
         requestedScopes: [AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL],
       });
       if (!credential.identityToken) {
-        Alert.alert("Không thể đăng nhập", "Apple không trả về mã xác thực. Vui lòng thử lại.");
+        Alert.alert(t("auth.errorTitle"), t("auth.appleTokenError"));
         return;
       }
       const name = [credential.fullName?.givenName, credential.fullName?.familyName].filter(Boolean).join(" ");
       completeSignIn("apple", name || null);
     } catch (error) {
       if ((error as { code?: string }).code !== "ERR_REQUEST_CANCELED") {
-        Alert.alert("Đăng nhập Apple thất bại", "Vui lòng thử lại sau.");
+        Alert.alert(t("auth.appleError"), t("auth.retry"));
       }
     }
   };
 
   const handleGoogleSignIn = async () => {
     if (!googleRequest) {
-      Alert.alert("Chưa cấu hình Google Sign-In", "Thêm Google OAuth client ID vào các biến EXPO_PUBLIC_GOOGLE_* rồi khởi động lại app.");
+      Alert.alert(t("auth.googleUnconfigured"), t("auth.googleSetupHelp"));
       return;
     }
     try {
       await promptGoogle();
     } catch {
-      Alert.alert("Đăng nhập Google thất bại", "Vui lòng thử lại sau.");
+      Alert.alert(t("auth.googleError"), t("auth.retry"));
     }
   };
 
@@ -86,28 +92,28 @@ export default function AuthScreen() {
         <View style={styles.hero}>
           <Mascot size={230} />
           <Text style={styles.brand}>Devora</Text>
-          <Text style={styles.title}>Nói tiếng Anh IT{"\n"}như viết code.</Text>
-          <Text style={styles.subtitle}>Kể Pol nghe bạn muốn giỏi mảng nào và nhận bài luyện ngắn 5 phút dành riêng cho bạn.</Text>
+          <Text style={styles.title}>{t("auth.title")}</Text>
+          <Text style={styles.subtitle}>{t("auth.subtitle")}</Text>
         </View>
 
         <View style={styles.actions}>
           {Platform.OS === "ios" && appleAvailable ? (
             <Pressable style={({ pressed }) => [styles.btn, styles.btnApple, pressed && styles.pressed]} onPress={handleAppleSignIn}>
               <Ionicons name="logo-apple" size={22} color="#000" />
-              <Text style={styles.btnAppleText}>Tiếp tục với Apple</Text>
+              <Text style={styles.btnAppleText}>{t("auth.apple")}</Text>
             </Pressable>
           ) : null}
           <Pressable style={({ pressed }) => [styles.btn, styles.btnGoogle, pressed && styles.pressed]} onPress={handleGoogleSignIn}>
             <Ionicons name="logo-google" size={20} color="#fff" />
-            <Text style={styles.btnGoogleText}>Tiếp tục với Google</Text>
+            <Text style={styles.btnGoogleText}>{t("auth.google")}</Text>
           </Pressable>
-          <Pressable onPress={() => completeSignIn("guest")} style={styles.guest}>
-            <Text style={styles.guestText}>Dùng thử không cần đăng nhập</Text>
+          <Pressable testID="auth-guest" onPress={() => completeSignIn("guest")} style={styles.guest}>
+            <Text style={styles.guestText}>{t("auth.guest")}</Text>
           </Pressable>
           <Text style={styles.terms}>
-            Nội dung học được xây từ standup, code review và incident call thực tế. Khi tiếp tục, bạn đồng ý với{" "}
-            <Text style={styles.link} onPress={() => Linking.openURL("https://coderslingo.com")}>Điều khoản</Text>{" "}và{" "}
-            <Text style={styles.link} onPress={() => Linking.openURL("https://coderslingo.com")}>Chính sách quyền riêng tư</Text> của Devora.
+            {t("auth.terms")} {" "}
+            <Text style={styles.link} onPress={() => Linking.openURL("https://coderslingo.com")}>{t("auth.termsLink")}</Text>{" "}
+            <Text style={styles.link} onPress={() => Linking.openURL("https://coderslingo.com")}>{t("auth.privacyLink")}</Text>
           </Text>
         </View>
       </View>
@@ -115,7 +121,7 @@ export default function AuthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   content: { flex: 1, paddingHorizontal: 24, justifyContent: "space-between" },
   hero: { flex: 1, alignItems: "center", justifyContent: "center" },

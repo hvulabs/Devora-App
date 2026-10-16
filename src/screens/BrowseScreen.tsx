@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import React, { useMemo, useState } from "react";
 import type { RootStackParamList, TabParamList } from "../navigation/types";
-import { colors, font, radius } from "../theme";
+import { font, radius } from "../theme";
 
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { CategoryCard } from "./HomeScreen";
@@ -17,28 +17,25 @@ import type { CompositeNavigationProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { ThemeColors } from "../theme";
 import { catalog } from "../data";
+import { filterCategories } from "../data/filterCategories";
+import { useAppTheme } from "../theme-context";
 import { useNavigation } from "@react-navigation/native";
+import { useT } from "../i18n";
 import { withAlpha } from "../components/ui";
 
 type Nav = CompositeNavigationProp<BottomTabNavigationProp<TabParamList, "Browse">, NativeStackNavigationProp<RootStackParamList>>;
 
 export default function BrowseScreen() {
   const nav = useNavigation<Nav>();
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const t = useT();
   const [q, setQ] = useState("");
   const [group, setGroup] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return catalog.categories.filter((c) => {
-      if (group && c.group !== group) return false;
-      if (!needle) return true;
-      return (
-        c.title.toLowerCase().includes(needle) ||
-        c.group.toLowerCase().includes(needle)
-      );
-    });
-  }, [q, group]);
+  const filtered = useMemo(() => filterCategories(catalog.categories, q, group), [q, group]);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -47,10 +44,10 @@ export default function BrowseScreen() {
           <Pressable onPress={() => nav.goBack()} style={styles.back} hitSlop={10}>
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </Pressable>
-          <Text style={styles.h1}>Khám phá</Text>
+          <Text style={styles.h1}>{t("browse.title")}</Text>
         </View>
         <Text style={styles.sub}>
-          {catalog.categories.length} chủ đề · chọn và bắt đầu trong 5 giây
+          {t("browse.subtitle", { count: catalog.categories.length })}
         </Text>
 
         <View style={styles.searchBox}>
@@ -58,7 +55,7 @@ export default function BrowseScreen() {
           <TextInput
             value={q}
             onChangeText={setQ}
-            placeholder="Tìm chủ đề..."
+            placeholder={t("browse.search")}
             placeholderTextColor={colors.textFaint}
             style={styles.searchInput}
           />
@@ -74,7 +71,7 @@ export default function BrowseScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
         >
-          <Chip label="Tất cả" active={!group} onPress={() => setGroup(null)} />
+          <Chip label={t("browse.all")} active={!group} onPress={() => setGroup(null)} />
           {catalog.groups.map((g) => (
             <Chip
               key={g.name}
@@ -97,7 +94,7 @@ export default function BrowseScreen() {
           <CategoryCard cat={item} onPress={() => nav.navigate("Category", { slug: item.slug })} />
         )}
         ListEmptyComponent={
-          <Text style={styles.empty}>Không tìm thấy chủ đề phù hợp.</Text>
+          <Text style={styles.empty}>{t("browse.empty")}</Text>
         }
       />
     </SafeAreaView>
@@ -107,7 +104,7 @@ export default function BrowseScreen() {
 function Chip({
   label,
   active,
-  color = colors.primary,
+  color,
   onPress,
 }: {
   label: string;
@@ -115,24 +112,27 @@ function Chip({
   color?: string;
   onPress: () => void;
 }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const chipColor = color ?? colors.primary;
   return (
     <Pressable
       onPress={onPress}
       style={[
         styles.chip,
         active
-          ? { backgroundColor: withAlpha(color, 0.2), borderColor: color }
+          ? { backgroundColor: withAlpha(chipColor, 0.2), borderColor: chipColor }
           : { borderColor: colors.border },
       ]}
     >
-      <Text style={[styles.chipText, { color: active ? color : colors.textMuted }]}>
+      <Text style={[styles.chipText, { color: active ? chipColor : colors.textMuted }]}> 
         {label}
       </Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   headerWrap: { paddingHorizontal: 16, paddingTop: 6, gap: 12, paddingBottom: 12 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 6 },

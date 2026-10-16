@@ -9,8 +9,9 @@ import {
 import { GlyphTile, withAlpha } from "../components/ui";
 import React, { useMemo } from "react";
 import type { RootStackParamList, TabParamList } from "../navigation/types";
+import Svg, { Circle } from "react-native-svg";
 import { catalog, totalExercises, totalQuestions } from "../data";
-import { colors, font, gradients, radius } from "../theme";
+import { font, gradients, radius } from "../theme";
 
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { Category } from "../types";
@@ -20,14 +21,22 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MascotBadge } from "../components/Mascot";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { ThemeColors } from "../theme";
+import { useAppTheme } from "../theme-context";
 import { useNavigation } from "@react-navigation/native";
 import { useProgress } from "../store/progress";
+import { useT } from "../i18n";
 
 type Nav = CompositeNavigationProp<BottomTabNavigationProp<TabParamList, "Home">, NativeStackNavigationProp<RootStackParamList>>;
 
 export default function HomeScreen() {
   const nav = useNavigation<Nav>();
-  const { xp, streak } = useProgress();
+  const { colors, isDark } = useAppTheme();
+  const styles = createStyles(colors);
+  const t = useT();
+  const { xp, dailyXp, dailyGoalXp, streak, lastActiveDay } = useProgress();
+  const todayXp = lastActiveDay === localDayKey() ? dailyXp : 0;
+  const activeStreak = streak > 0 && lastActiveDay === previousDayKey();
 
   const featured = useMemo(() => {
     const cat = catalog.categories[0];
@@ -63,14 +72,12 @@ export default function HomeScreen() {
 
         {/* hero */}
         <View style={styles.block}>
-          <Text style={styles.heroKicker}>Speak tech English</Text>
-          <Text style={styles.heroTitle}>like you write code.</Text>
-          <Text style={styles.heroSub}>
-            Bài luyện 5 phút từ standup, code review và incident call thực tế.
-          </Text>
+          <Text style={styles.heroKicker}>{t("home.kicker")}</Text>
+          <Text style={styles.heroTitle}>{t("home.heroTitle")}</Text>
+          <Text style={styles.heroSub}>{t("home.subtitle")}</Text>
 
           <LinearGradient
-            colors={gradients.brand}
+            colors={isDark ? gradients.brand : ["#6956D9", "#3D72B8"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroCard}
@@ -95,10 +102,11 @@ export default function HomeScreen() {
               </Text>
             ) : null}
             <Pressable
+              testID="home-featured-exercise"
               style={styles.heroCta}
               onPress={() => nav.navigate("Exercise", { catSlug: featured.cat.slug, exId: featured.ex.id })}
             >
-              <Text style={styles.heroCtaText}>Bắt đầu luyện</Text>
+              <Text style={styles.heroCtaText}>{t("home.start")}</Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </Pressable>
           </LinearGradient>
@@ -106,15 +114,30 @@ export default function HomeScreen() {
 
         {/* stats */}
         <View style={styles.statCards}>
-          <StatCard big={`${(totalQuestions / 1000).toFixed(1)}k+`} label="câu hỏi" color={colors.pink} />
-          <StatCard big={`${totalExercises}+`} label="bài luyện" color={colors.green} />
-          <StatCard big={`${catalog.categories.length}`} label="chủ đề" color={colors.cyan} />
+          <StatCard big={`${(totalQuestions / 1000).toFixed(1)}k+`} label={t("home.questions")} color={colors.pink} />
+          <StatCard big={`${totalExercises}+`} label={t("home.exercises")} color={colors.green} />
+          <StatCard big={`${catalog.categories.length}`} label={t("home.topics")} color={colors.cyan} />
+        </View>
+
+        <View style={styles.goalBlock}>
+          <View style={styles.goalRing}>
+            <Svg width={68} height={68} viewBox="0 0 68 68">
+              <Circle cx={34} cy={34} r={28} stroke={colors.border} strokeWidth={6} fill="none" />
+              <Circle cx={34} cy={34} r={28} stroke={colors.green} strokeWidth={6} fill="none" strokeLinecap="round" strokeDasharray={`${Math.min(1, todayXp / dailyGoalXp) * 176} 176`} rotation={-90} origin="34, 34" />
+            </Svg>
+            <Text style={styles.goalRingText}>{Math.min(100, Math.round((todayXp / dailyGoalXp) * 100))}%</Text>
+          </View>
+          <View style={styles.goalCopy}>
+            <Text style={styles.sectionLabel}>{t("home.dailyGoal")}</Text>
+            <Text style={styles.goalProgress}>{t("home.goalProgress", { current: todayXp, goal: dailyGoalXp })}</Text>
+            <Text style={styles.goalReminder}>{lastActiveDay === localDayKey() ? "" : t(activeStreak ? "home.keepStreak" : "home.startStreak", { count: streak })}</Text>
+          </View>
         </View>
 
         {/* groups */}
         <View style={styles.block}>
-          <Text style={styles.sectionLabel}>LỘ TRÌNH</Text>
-          <Text style={styles.sectionTitle}>Bạn làm mảng nào?</Text>
+          <Text style={styles.sectionLabel}>{t("home.paths")}</Text>
+          <Text style={styles.sectionTitle}>{t("home.pathQuestion")}</Text>
           <FlatList
             data={catalog.groups}
             horizontal
@@ -137,11 +160,11 @@ export default function HomeScreen() {
         <View style={styles.block}>
           <View style={styles.rowBetween}>
             <View>
-              <Text style={styles.sectionLabel}>LUYỆN TẬP</Text>
-              <Text style={styles.sectionTitle}>Chọn một chủ đề.</Text>
+              <Text style={styles.sectionLabel}>{t("home.practice")}</Text>
+              <Text style={styles.sectionTitle}>{t("home.chooseTopic")}</Text>
             </View>
             <Pressable style={styles.seeAll} onPress={() => nav.navigate("Browse")}>
-              <Text style={styles.seeAllText}>Tất cả {catalog.categories.length}</Text>
+              <Text style={styles.seeAllText}>{t("home.allTopics", { count: catalog.categories.length })}</Text>
             </Pressable>
           </View>
 
@@ -157,6 +180,8 @@ export default function HomeScreen() {
 }
 
 function StatCard({ big, label, color }: { big: string; label: string; color: string }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.statCard}>
       <Text style={[styles.statBig, { color }]}>{big}</Text>
@@ -166,6 +191,9 @@ function StatCard({ big, label, color }: { big: string; label: string; color: st
 }
 
 export function CategoryCard({ cat, onPress }: { cat: Category; onPress?: () => void }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const t = useT();
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.catCard, pressed && { opacity: 0.85 }]}>
       <GlyphTile glyph={cat.glyph} color={cat.color} />
@@ -173,15 +201,25 @@ export function CategoryCard({ cat, onPress }: { cat: Category; onPress?: () => 
         {cat.title}
       </Text>
       <View style={styles.catMetaRow}>
-        <Text style={styles.catMeta}>{cat.exerciseCount} bài</Text>
+        <Text style={styles.catMeta}>{cat.exerciseCount} {t("home.exercises")}</Text>
         <View style={styles.catMetaDot} />
-        <Text style={styles.catMeta}>{cat.questionCount} câu</Text>
+        <Text style={styles.catMeta}>{cat.questionCount} {t("home.questions")}</Text>
       </View>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+function localDayKey(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function previousDayKey() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return localDayKey(yesterday);
+}
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: "row",
@@ -252,6 +290,12 @@ const styles = StyleSheet.create({
   heroCtaText: { color: "#fff", fontWeight: "800", fontSize: font.small },
 
   statCards: { flexDirection: "row", gap: 10, paddingHorizontal: 16, marginTop: 18 },
+  goalBlock: { flexDirection: "row", alignItems: "center", gap: 14, marginHorizontal: 16, marginTop: 14, padding: 12, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md },
+  goalRing: { width: 68, height: 68, alignItems: "center", justifyContent: "center" },
+  goalRingText: { position: "absolute", color: colors.text, fontSize: font.small, fontWeight: "900" },
+  goalCopy: { flex: 1 },
+  goalProgress: { color: colors.text, fontSize: font.body, fontWeight: "800", marginTop: 4 },
+  goalReminder: { color: colors.textMuted, fontSize: font.tiny, marginTop: 4 },
   statCard: {
     flex: 1,
     backgroundColor: colors.card,

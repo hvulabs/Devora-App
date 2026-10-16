@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1242" height="2436" viewBox="0 0 1242 2436">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#211b43"/><stop offset="1" stop-color="#100e22"/></linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b9a7ff"/><stop offset="1" stop-color="#7c5cff"/></linearGradient>
+  </defs>
+  <rect width="1242" height="2436" fill="url(#bg)"/>
+  <g transform="translate(0 760)">
+    <path d="M500 288 390 422l110 134M742 288l110 134-110 134" fill="none" stroke="url(#mark)" stroke-width="52" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m690 260-88 324" fill="none" stroke="#fcd34d" stroke-width="42" stroke-linecap="round"/>
+    <circle cx="621" cy="422" r="13" fill="#fff"/>
+  </g>
+  <text x="621" y="1530" text-anchor="middle" fill="#f5f3ff" font-family="sans-serif" font-size="112" font-weight="700">devora</text>
+  <text x="621" y="1610" text-anchor="middle" fill="#a59fcb" font-family="sans-serif" font-size="38" letter-spacing="4">ENGLISH FOR IT</text>
+</svg>

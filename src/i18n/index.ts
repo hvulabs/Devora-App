@@ -11,6 +11,6 @@ i18n.enableFallback = true;
 export function useT() {
   const { language } = useProgress();
   const systemLanguage = Localization.getLocales()[0]?.languageCode === "vi" ? "vi" : "en";
-  i18n.locale = language === "system" ? systemLanguage : language;
+  i18n.locale = !language || language === "system" ? systemLanguage : language;
   return (key: string, options?: Record<string, string | number>) => i18n.t(key, options);
 }

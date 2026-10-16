@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { applyExerciseResult } from "./progressLogic";
 
 const KEY = "devora.progress.v1";
 
@@ -76,7 +77,10 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         const raw = await AsyncStorage.getItem(KEY);
         if (raw) {
           const saved = JSON.parse(raw) as Partial<ProgressState>;
-          setState({ ...initial, ...saved, badges: saved.badges ?? [], completed: saved.completed ?? {} });
+          const restored = { ...initial, ...saved, badges: saved.badges ?? [], completed: saved.completed ?? {} };
+          if (restored.lastActiveDay && restored.lastActiveDay < previousDayKey()) restored.streak = 0;
+          if (restored.lastActiveDay !== dayKey()) restored.dailyXp = 0;
+          setState(restored);
         }
       } catch {}
       setReady(true);
@@ -99,37 +103,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   const recordResult = useCallback(
     (exerciseId: string, correct: number, total: number, xpGain: number) => {
-      const today = dayKey();
-      let streak = state.streak;
-      if (state.lastActiveDay !== today) {
-        streak = state.lastActiveDay === previousDayKey() ? streak + 1 : 1;
-      }
-      const prev = state.completed[exerciseId];
-      const pct = Math.round((correct / total) * 100);
-      const result: ExerciseResult = {
-        correct,
-        total,
-        bestPct: Math.max(pct, prev?.bestPct ?? 0),
-        completedAt: Date.now(),
-      };
-      const xp = state.xp + xpGain;
-      const dailyXp = state.lastActiveDay === today ? state.dailyXp + xpGain : xpGain;
-      const badges = new Set(state.badges);
-      [100, 500, 1000].forEach((threshold) => {
-        if (xp >= threshold) badges.add(`xp-${threshold}`);
-      });
-      [3, 7, 30].forEach((threshold) => {
-        if (streak >= threshold) badges.add(`streak-${threshold}`);
-      });
-      persist({
-        ...state,
-        xp,
-        dailyXp,
-        streak,
-        lastActiveDay: today,
-        badges: [...badges],
-        completed: { ...state.completed, [exerciseId]: result },
-      });
+      persist(applyExerciseResult(state, exerciseId, correct, total, xpGain));
     },
     [state, persist]
   );

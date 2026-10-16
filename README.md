@@ -1,52 +1,42 @@
-# Devora — English for IT (React Native / Expo)
+# Devora — English for IT
 
-Ứng dụng mobile học tiếng Anh cho dân IT, giao diện lấy cảm hứng từ
-[coderslingo.com](https://coderslingo.com), dữ liệu bài tập được crawl và xử lý
-sẵn. Viết bằng **Expo + React Native + TypeScript** nên build được cả **iOS** và
-**Android** từ cùng một codebase.
+Ứng dụng học tiếng Anh cho ngành công nghệ, xây bằng Expo, React Native và TypeScript.
 
-## Màn hình đã dựng
-- **Splash** — logo linh vật "Pol" có animation, thanh loading, tự điều hướng
-  sang Auth hoặc Home tuỳ trạng thái đăng nhập.
-- **Auth** — đúng theo mockup: linh vật, tiêu đề, nút *Tiếp tục với Apple* /
-  *Google*, dùng thử không cần đăng nhập, dòng điều khoản.
-- **Home** — hero "quiz of the day", thống kê, nhóm lộ trình, lưới chủ đề.
-- **Browse** (bonus) — tìm kiếm + lọc theo nhóm toàn bộ 69 chủ đề.
+## Tính năng
+- Luồng Splash → đăng nhập/khách → Home/Browse → Category → Exercise → Result.
+- 69 chủ đề và dữ liệu câu hỏi offline-first, lazy-load theo chủ đề.
+- XP, mục tiêu XP hằng ngày, streak, kỷ lục, huy hiệu và lịch sử được lưu bằng AsyncStorage.
+- Hồ sơ, cài đặt âm thanh/thông báo/ngôn ngữ/theme, VI/EN và giao diện sáng/tối.
+- Apple Sign In trên iOS và Google OIDC; chế độ khách luôn khả dụng.
 
-> Nút Apple/Google hiện là **đăng nhập demo** (lưu cờ cục bộ bằng AsyncStorage).
-> Muốn đăng nhập thật cần thêm `expo-apple-authentication` / Google OAuth và
-> backend — chưa nằm trong phạm vi UI clone này.
-
-## Chạy app
+## Chạy và kiểm tra
 ```bash
-cd devora-app
-npm install          # hoặc: yarn
-npx expo start       # quét QR bằng Expo Go, hoặc nhấn i / a
+npm install
+npm start
+npm run typecheck
+npm test
 ```
-- iOS: `npx expo start --ios` (cần macOS + Xcode, hoặc Expo Go trên iPhone)
-- Android: `npx expo start --android` (cần Android Studio/emulator, hoặc Expo Go)
 
-## Build file cài đặt (EAS)
+`npm run test:e2e` chạy `.maestro/main-flow.yaml`; cần cài Maestro và một development build trên simulator/thiết bị.
+
+## Đăng nhập
+Tạo OAuth client IDs cho iOS, Android và Web trong Google Cloud Console, sau đó điền các biến trong `.env.example` vào `.env` khi chạy local hoặc cấu hình chúng trong EAS Environment Variables. Các `EXPO_PUBLIC_*` client ID là giá trị công khai, không đặt private client secret ở đây. Redirect scheme của app là `devora`.
+
+Apple Sign In cần capability trên Apple Developer và development build iOS; Expo Go không hỗ trợ kiểm thử đầy đủ. Đăng nhập hiện nhận diện nhà cung cấp trên thiết bị và giữ tiến độ local; chưa có backend để xác minh token hoặc đồng bộ tài khoản giữa nhiều thiết bị. URL điều khoản/quyền riêng tư trong Auth cũng cần thay bằng URL chính thức trước khi phát hành.
+
+## EAS Build
+`eas.json` có các profile `development`, `preview` (Android APK) và `production` (Android AAB/iOS). App icon, Android adaptive icon và splash nằm trong `assets/`.
+
 ```bash
-npm i -g eas-cli
-eas build -p android   # .apk / .aab
-eas build -p ios       # .ipa (cần tài khoản Apple Developer)
+npx eas-cli login
+npx eas-cli build --platform android --profile preview
+npx eas-cli build --platform android --profile production
+npx eas-cli build --platform ios --profile production
 ```
 
-## Dữ liệu
-- `src/data/catalog.json` — metadata nhẹ (69 chủ đề, 807 bài), load tức thì để
-  duyệt.
-- `src/data/categories/<slug>.json` — câu hỏi từng chủ đề, **lazy-load** qua
-  `src/data/dataIndex.ts` khi mở chủ đề đó (tránh nặng bundle).
-- Sinh lại từ HTML đã crawl: `python ../extract.py` rồi `python ../build_data.py`.
+Build iOS, ký ứng dụng và gửi store cần tài khoản Apple Developer; phát hành Google Play cần tài khoản Play Console. Chưa thể submit store hoặc xác nhận thiết bị thật nếu chưa có các tài khoản/chứng chỉ đó.
 
-## Cấu trúc
-```
-src/
-  components/   Mascot (SVG), ui (Pill, Card, ProgressBar...)
-  data/         catalog + per-category json + loader
-  navigation/   RootNavigator (Splash → Auth → Home → Browse)
-  screens/      Splash, Auth, Home, Browse
-  store/        progress (XP, streak, đăng nhập — AsyncStorage)
-  theme.ts      màu/token thiết kế
-```
+## Dữ liệu và QA
+- `src/data/catalog.json`: 69 chủ đề, 807 bài luyện.
+- `src/data/categories/<slug>.json`: dữ liệu câu hỏi được nạp theo yêu cầu.
+- Unit tests bao phủ tiến độ XP/streak/kỷ lục/huy hiệu và loader dữ liệu. Parser Python chưa được kiểm thử trong workspace này vì các script crawl không có ở đây.
