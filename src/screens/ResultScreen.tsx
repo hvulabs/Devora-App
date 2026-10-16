@@ -1,0 +1,84 @@
+import React, { useEffect, useRef } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RouteProp } from "@react-navigation/native";
+import type { RootStackParamList } from "../navigation/types";
+import { getCategory } from "../data";
+import { Mascot } from "../components/Mascot";
+import { colors, font, radius } from "../theme";
+
+type Nav = NativeStackNavigationProp<RootStackParamList, "Result">;
+type ResultRoute = RouteProp<RootStackParamList, "Result">;
+
+export default function ResultScreen() {
+  const nav = useNavigation<Nav>();
+  const { params } = useRoute<ResultRoute>();
+  const xpValue = useRef(new Animated.Value(0)).current;
+  const category = getCategory(params.catSlug);
+  const pct = params.total > 0 ? Math.round((params.correct / params.total) * 100) : 0;
+  const message = pct >= 80 ? "Xuất sắc!" : pct >= 50 ? "Khá lắm!" : "Cố thêm nhé!";
+
+  useEffect(() => {
+    Animated.timing(xpValue, { toValue: params.xp, duration: 850, useNativeDriver: false }).start();
+  }, [params.xp, xpValue]);
+
+  return (
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+      <View style={styles.content}>
+        <Mascot size={142} />
+        <Text style={styles.headline}>{message}</Text>
+        {params.newRecord ? <Text style={styles.record}>Kỷ lục mới</Text> : null}
+        <Text style={styles.topic}>{category?.title ?? "Bài luyện hoàn thành"}</Text>
+        <View style={styles.scoreRing}>
+          <Text style={styles.percentage}>{pct}%</Text>
+          <Text style={styles.scoreLabel}>chính xác</Text>
+        </View>
+        <Text style={styles.correct}>{params.correct} / {params.total} câu đúng</Text>
+        <View style={styles.xpRow}>
+          <Ionicons name="flash" size={23} color={colors.accent} />
+          <AnimatedXP value={xpValue} />
+        </View>
+      </View>
+      <View style={styles.actions}>
+        <Pressable onPress={() => nav.replace("Exercise", { catSlug: params.catSlug, exId: params.exId })} style={styles.primary}>
+          <Ionicons name="refresh" size={19} color="#fff" />
+          <Text style={styles.primaryText}>Làm lại</Text>
+        </Pressable>
+        <Pressable onPress={() => nav.popToTop()} style={styles.secondary}>
+          <Text style={styles.secondaryText}>Về trang chủ</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function AnimatedXP({ value }: { value: Animated.Value }) {
+  const [display, setDisplay] = React.useState(0);
+  useEffect(() => {
+    const listener = value.addListener(({ value: current }) => setDisplay(Math.round(current)));
+    return () => value.removeListener(listener);
+  }, [value]);
+  return <Text style={styles.xp}>+{display} XP</Text>;
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.bg, justifyContent: "space-between" },
+  content: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 },
+  headline: { color: colors.text, fontSize: font.h1, fontWeight: "900", marginTop: 8 },
+  record: { color: colors.accent, fontSize: font.small, fontWeight: "800", marginTop: 5 },
+  topic: { color: colors.textMuted, fontSize: font.small, marginTop: 8, textAlign: "center" },
+  scoreRing: { width: 154, height: 154, borderRadius: 77, borderWidth: 9, borderColor: colors.green, alignItems: "center", justifyContent: "center", marginTop: 24 },
+  percentage: { color: colors.text, fontSize: 38, fontWeight: "900" },
+  scoreLabel: { color: colors.textMuted, fontSize: font.tiny, fontWeight: "700" },
+  correct: { color: colors.textMuted, fontSize: font.body, marginTop: 15 },
+  xpRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 16 },
+  xp: { color: colors.accent, fontSize: 24, fontWeight: "900" },
+  actions: { padding: 20, gap: 10 },
+  primary: { minHeight: 52, borderRadius: radius.md, backgroundColor: colors.primary, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  primaryText: { color: "#fff", fontSize: font.body, fontWeight: "800" },
+  secondary: { minHeight: 48, alignItems: "center", justifyContent: "center" },
+  secondaryText: { color: colors.textMuted, fontSize: font.small, fontWeight: "700" },
+});

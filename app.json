@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Devora",
+    "slug": "devora-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "devora",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#15132A",
+    "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#15132A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.devora.app"
+    },
+    "android": {
+      "package": "com.devora.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#15132A"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

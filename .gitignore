@@ -1,0 +1,54 @@
+# === Devora (Expo / React Native) ===
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+yarn.lock.*
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native builds (managed workflow regenerates these)
+/ios/
+/android/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# EAS
+.eas/
+
+# Metro
+.metro-health-check*
+
+# Logs / debug
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+google-services.json
+GoogleService-Info.plist
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+
+# Coverage / tests
+coverage/
+/plans
+# NOTE: src/data/*.json and src/data/dataIndex.ts are generated app content
+# and ARE committed on purpose — the app ships with them.
