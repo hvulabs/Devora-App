@@ -1,6 +1,6 @@
 // Devora design tokens — dark indigo theme inspired by the CodersLingo UI.
 
-export const colors = {
+export const darkColors = {
   bg: "#15132A",
   bgDeep: "#100E22",
   card: "#211E3A",
@@ -29,6 +29,35 @@ export const colors = {
   white: "#FFFFFF",
   black: "#000000",
 };
+
+export const lightColors = {
+  bg: "#F5F7FC",
+  bgDeep: "#E9EDF6",
+  card: "#FFFFFF",
+  cardAlt: "#F0F2FA",
+  elevated: "#E4E8F4",
+  border: "#D8DDEC",
+  borderSoft: "#E4E8F2",
+  primary: "#5B45D6",
+  primaryDark: "#4332AF",
+  primarySoft: "rgba(91, 69, 214, 0.12)",
+  accent: "#A66500",
+  green: "#087A55",
+  greenSoft: "rgba(8, 122, 85, 0.12)",
+  red: "#C13754",
+  redSoft: "rgba(193, 55, 84, 0.12)",
+  cyan: "#007F91",
+  pink: "#B23A78",
+  blue: "#2865B8",
+  text: "#17192B",
+  textMuted: "#555D73",
+  textFaint: "#737B91",
+  white: "#FFFFFF",
+  black: "#000000",
+};
+
+export type ThemeColors = typeof darkColors;
+export const colors: ThemeColors = darkColors;
 
 export const gradients = {
   brand: ["#7C4DFF", "#4F46E5"] as const,

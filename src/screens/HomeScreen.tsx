@@ -1,26 +1,29 @@
-import React, { useMemo } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
   FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/types";
-import { catalog, totalExercises, totalQuestions } from "../data";
-import { colors, radius, font, gradients } from "../theme";
 import { GlyphTile, withAlpha } from "../components/ui";
-import { MascotBadge } from "../components/Mascot";
-import { useProgress } from "../store/progress";
-import type { Category } from "../types";
+import React, { useMemo } from "react";
+import type { RootStackParamList, TabParamList } from "../navigation/types";
+import { catalog, totalExercises, totalQuestions } from "../data";
+import { colors, font, gradients, radius } from "../theme";
 
-type Nav = NativeStackNavigationProp<RootStackParamList, "Home">;
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import type { Category } from "../types";
+import type { CompositeNavigationProp } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { MascotBadge } from "../components/Mascot";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { useProgress } from "../store/progress";
+
+type Nav = CompositeNavigationProp<BottomTabNavigationProp<TabParamList, "Home">, NativeStackNavigationProp<RootStackParamList>>;
 
 export default function HomeScreen() {
   const nav = useNavigation<Nav>();

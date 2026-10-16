@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const KEY = "devora.progress.v1";
@@ -12,34 +13,57 @@ export interface ExerciseResult {
 
 export interface ProgressState {
   xp: number;
+  dailyXp: number;
+  dailyGoalXp: number;
   streak: number;
   lastActiveDay: string | null;
   signedIn: boolean;
   provider: string | null;
+  displayName: string | null;
+  badges: string[];
+  soundEnabled: boolean;
+  remindersEnabled: boolean;
+  language: "system" | "en" | "vi";
+  themeMode: "system" | "dark" | "light";
   completed: Record<string, ExerciseResult>; // exerciseId -> result
 }
 
 const initial: ProgressState = {
   xp: 0,
+  dailyXp: 0,
+  dailyGoalXp: 50,
   streak: 0,
   lastActiveDay: null,
   signedIn: false,
   provider: null,
+  displayName: null,
+  badges: [],
+  soundEnabled: true,
+  remindersEnabled: false,
+  language: "system",
+  themeMode: "system",
   completed: {},
 };
 
 interface Ctx extends ProgressState {
   ready: boolean;
-  signIn: (provider: string) => void;
+  signIn: (provider: string, displayName?: string | null) => void;
   signOut: () => void;
   recordResult: (exerciseId: string, correct: number, total: number, xpGain: number) => void;
   reset: () => void;
+  updateSettings: (settings: Partial<Pick<ProgressState, "dailyGoalXp" | "soundEnabled" | "remindersEnabled" | "language" | "themeMode">>) => void;
 }
 
 const ProgressContext = createContext<Ctx>({} as Ctx);
 
 function dayKey(d = new Date()) {
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function previousDayKey() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return dayKey(yesterday);
 }
 
 export function ProgressProvider({ children }: { children: React.ReactNode }) {
@@ -50,7 +74,10 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const raw = await AsyncStorage.getItem(KEY);
-        if (raw) setState({ ...initial, ...JSON.parse(raw) });
+        if (raw) {
+          const saved = JSON.parse(raw) as Partial<ProgressState>;
+          setState({ ...initial, ...saved, badges: saved.badges ?? [], completed: saved.completed ?? {} });
+        }
       } catch {}
       setReady(true);
     })();
@@ -62,7 +89,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = useCallback(
-    (provider: string) => persist({ ...state, signedIn: true, provider }),
+    (provider: string, displayName: string | null = null) => persist({ ...state, signedIn: true, provider, displayName }),
     [state, persist]
   );
   const signOut = useCallback(
@@ -75,8 +102,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       const today = dayKey();
       let streak = state.streak;
       if (state.lastActiveDay !== today) {
-        const yesterday = dayKey(new Date(Date.now() - 86400000));
-        streak = state.lastActiveDay === yesterday ? streak + 1 : 1;
+        streak = state.lastActiveDay === previousDayKey() ? streak + 1 : 1;
       }
       const prev = state.completed[exerciseId];
       const pct = Math.round((correct / total) * 100);
@@ -86,21 +112,48 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         bestPct: Math.max(pct, prev?.bestPct ?? 0),
         completedAt: Date.now(),
       };
+      const xp = state.xp + xpGain;
+      const dailyXp = state.lastActiveDay === today ? state.dailyXp + xpGain : xpGain;
+      const badges = new Set(state.badges);
+      [100, 500, 1000].forEach((threshold) => {
+        if (xp >= threshold) badges.add(`xp-${threshold}`);
+      });
+      [3, 7, 30].forEach((threshold) => {
+        if (streak >= threshold) badges.add(`streak-${threshold}`);
+      });
       persist({
         ...state,
-        xp: state.xp + xpGain,
+        xp,
+        dailyXp,
         streak,
         lastActiveDay: today,
+        badges: [...badges],
         completed: { ...state.completed, [exerciseId]: result },
       });
     },
     [state, persist]
   );
 
-  const reset = useCallback(() => persist({ ...initial, signedIn: state.signedIn, provider: state.provider }), [state, persist]);
+  const reset = useCallback(() => persist({
+    ...initial,
+    signedIn: state.signedIn,
+    provider: state.provider,
+    displayName: state.displayName,
+    dailyGoalXp: state.dailyGoalXp,
+    soundEnabled: state.soundEnabled,
+    remindersEnabled: state.remindersEnabled,
+    language: state.language,
+    themeMode: state.themeMode,
+  }), [state, persist]);
+
+  const updateSettings = useCallback(
+    (settings: Partial<Pick<ProgressState, "dailyGoalXp" | "soundEnabled" | "remindersEnabled" | "language" | "themeMode">>) =>
+      persist({ ...state, ...settings }),
+    [state, persist]
+  );
 
   return (
-    <ProgressContext.Provider value={{ ...state, ready, signIn, signOut, recordResult, reset }}>
+    <ProgressContext.Provider value={{ ...state, ready, signIn, signOut, recordResult, reset, updateSettings }}>
       {children}
     </ProgressContext.Provider>
   );

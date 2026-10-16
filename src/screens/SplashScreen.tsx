@@ -1,10 +1,11 @@
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated, Easing } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { colors, font } from "../theme";
+
+import { Mascot } from "../components/Mascot";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-import { Mascot } from "../components/Mascot";
-import { colors, font } from "../theme";
+import { useNavigation } from "@react-navigation/native";
 import { useProgress } from "../store/progress";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Splash">;
@@ -48,7 +49,7 @@ export default function SplashScreen() {
 
   const maybeGo = () => {
     if (!timePassed.current || !ready) return;
-    nav.reset({ index: 0, routes: [{ name: signedIn ? "Home" : "Auth" }] });
+    nav.reset({ index: 0, routes: [{ name: signedIn ? "Tabs" : "Auth" }] });
   };
 
   useEffect(() => {

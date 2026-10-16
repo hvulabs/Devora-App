@@ -1,24 +1,27 @@
-import React, { useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
   FlatList,
   Pressable,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/types";
-import { catalog } from "../data";
-import { colors, radius, font } from "../theme";
+import React, { useMemo, useState } from "react";
+import type { RootStackParamList, TabParamList } from "../navigation/types";
+import { colors, font, radius } from "../theme";
+
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { CategoryCard } from "./HomeScreen";
+import type { CompositeNavigationProp } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { catalog } from "../data";
+import { useNavigation } from "@react-navigation/native";
 import { withAlpha } from "../components/ui";
 
-type Nav = NativeStackNavigationProp<RootStackParamList, "Browse">;
+type Nav = CompositeNavigationProp<BottomTabNavigationProp<TabParamList, "Browse">, NativeStackNavigationProp<RootStackParamList>>;
 
 export default function BrowseScreen() {
   const nav = useNavigation<Nav>();

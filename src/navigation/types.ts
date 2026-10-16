@@ -1,8 +1,15 @@
+import type { NavigatorScreenParams } from "@react-navigation/native";
+
+export type TabParamList = {
+  Home: undefined;
+  Browse: undefined;
+  Profile: undefined;
+};
+
 export type RootStackParamList = {
   Splash: undefined;
   Auth: undefined;
-  Home: undefined;
-  Browse: undefined;
+  Tabs: NavigatorScreenParams<TabParamList> | undefined;
   Category: { slug: string };
   Exercise: { catSlug: string; exId: string };
   Result: {
@@ -13,4 +20,5 @@ export type RootStackParamList = {
     xp: number;
     newRecord: boolean;
   };
+  Settings: undefined;
 };
